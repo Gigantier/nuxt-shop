@@ -64,7 +64,7 @@ app.get('/Category/:id', cache(CACHE_TIME), function(req, res) {
 
 app.post('/User/login', function(req, res) {
   apiClient.authenticate(req.body.email, req.body.pwd).then((data) => {
-    delete data.clientId;    
+    delete data.clientId;
     res.json(data);
   }).catch((data) => {
     res.status(400).json(data);
@@ -88,24 +88,24 @@ app.get('/Banner', cache(CACHE_TIME), function(req, res) {
 });
 
 app.get('/Product', cache(CACHE_TIME), function(req, res) {
-  
+
   let endpoint = '/Product/list';
   if(req.query.categoryId > 0)
     endpoint = '/Product/listForCategory/'+req.query.categoryId;
-  
+
   if(req.query.sort) {
     req.query.sortField = req.query.sort;
     if(req.query.sort == 'created') {
       req.query.sortWay = 'desc';
     }
   }
-  
+
   apiClient.call(endpoint, req.query).then((data) => {
     res.json(data);
   }).catch((data) => {
     res.status(400).json(data);
   });
-  
+
 });
 
 app.get('/Product/:id', cache(CACHE_TIME), function(req, res) {
@@ -166,7 +166,7 @@ app.get('/Carrier', cache(CACHE_TIME), function(req, res) {
 
 app.post('/Order', function(req, res) {
   req.body.products = JSON.stringify(req.body.products);
-  
+
   if(req.body.discounts) {
     req.body.discounts = JSON.stringify(req.body.discounts);
   }
@@ -178,13 +178,21 @@ app.post('/Order', function(req, res) {
   });
 });
 
+app.get('/Order/:id', cache(CACHE_TIME), function(req, res) {
+  apiClient.call('/Order/list/'+req.params.id).then((data) => {
+    res.json(data);
+  }).catch((data) => {
+    res.status(400).json(data);
+  });
+});
+
 app.post('/Order/calculateTotal', function(req, res) {
   req.body.products = JSON.stringify(req.body.products);
-  
+
   if(req.body.discounts) {
     req.body.discounts = JSON.stringify(req.body.discounts);
   }
-  
+
   apiClient.call('/Order/calculateTotal', req.body).then((data) => {
     res.json(data);
   }).catch((data) => {
