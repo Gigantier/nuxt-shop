@@ -74,7 +74,7 @@
                   </li>
                 </ul>
                 <div class="total">
-                  <p>{{ cartProducts.length }} items | <strong>Total: {{ $price(cartTotal) }}</strong></p>
+                  <p>{{ cartQuantity }} {{ `item${(cartQuantity != 1 ? 's' : '')}` }} | <strong>Total: {{ $price(cartTotal) }}</strong></p>
                   <router-link to="carrito" class="btn">Finalizar compra</router-link>
                 </div>
               </div>
@@ -88,6 +88,7 @@
 
 <script>
 import User from '~/components/gigantier/User';
+import Cart from '~/components/Cart';
 
 export default {
   name: 'Header',
@@ -99,14 +100,6 @@ export default {
     categories: {
       type: Array,
       required: true
-    },
-    cartProducts: {
-      type: Array,
-      required: true
-    },
-    cartTotal: {
-      type: Number,
-      required: true
     }
   },
   data: () => ({
@@ -114,6 +107,17 @@ export default {
     pwd: null,
     user: null
   }),
+  computed: {
+    cartProducts() {
+      return Cart.state.products;
+    },
+    cartQuantity() {
+      return Cart.getters.quantity;
+    },
+    cartTotal() {
+      return Cart.getters.total;
+    }
+  },
   created() {
     this.user = User;
     this.user.init();
@@ -127,11 +131,11 @@ export default {
         this.$nuxt.$loading.finish();
       });
     },
-    removeProduct(index) {
-      this.$nuxt.$emit('cartRemove', index);
-    },
     logout() {
       User.logout();
+    },
+    removeProduct(index) {
+      Cart.commit('remove', index);
     }
   }
 };

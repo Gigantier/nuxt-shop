@@ -198,8 +198,11 @@ export default {
       return null;
     },
     buy() {
-      Cart.add(this.product.id, (this.version ? this.version.id : null), 1, this.product);
-      this.$nuxt.$emit('cartUpdated');
+      Cart.commit('add', {
+        product: this.product,
+        versionId: (this.version ? this.version.id : null),
+        quantity: 1
+      });
       this.$router.push('/carrito');
     }
   }

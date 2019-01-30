@@ -170,7 +170,7 @@
     
     <div v-if="products.length === 0" class="empty">
       <h2>Aún no has agregado ningún producto al carrito</h2>
-      <a href="" class="btn">Ir a comprar</a>
+      <router-link to="/" class="btn">Ir a comprar</router-link>
     </div>
   
   </div>
@@ -188,7 +188,6 @@ import Order from '~/components/gigantier/Order';
 export default {
   name: 'Cart',
   data: () => ({
-    products: [],
     newDiscount: '',
     name: null,
     surname: null,
@@ -205,15 +204,28 @@ export default {
     states: [],
     cities: [],
     carriers: [],
-    discounts: [],
     paymentMethods: [],
     shipping: 0,
-    subtotal: Cart.total(),
     discount: 0,
-    total: Cart.total(),
+    remoteSubtotal: null,
+    remoteTotal: null,
     carrierLoading: false,
     creating: false
   }),
+  computed: {
+    products() {
+      return Cart.state.products;
+    },
+    discounts() {
+      return Cart.state.discounts;
+    },
+    subtotal() {
+      return (this.remoteSubtotal !== null ? this.remoteSubtotal : Cart.getters.total);
+    },
+    total() {
+      return (this.remoteTotal !== null ? this.remoteTotal : Cart.getters.total);
+    }
+  },
   watch: {
     countryId: async function (countryId) {
       this.states = [{ id: null, name: 'Cargando...' }];
@@ -246,9 +258,6 @@ export default {
     }
   },
   async created() {
-    this.products = Cart.products();
-    this.discounts = Cart.discounts();
-    
     const pm = await PaymentMethod.get();
     this.paymentMethods = pm.data.paymentMethods;
 
@@ -278,22 +287,26 @@ export default {
       if (this.carrierId) {
         params.carrierId = this.carrierId;
       }
-
+      
       try {
         const data = await Order.calculateTotal(params);      
-  
+
         this.discount = data.data.discount;
         this.shipping = data.data.shipping;
-        this.subtotal = data.data.subtotal;
-        this.total = data.data.total;      
+        this.remoteSubtotal = data.data.subtotal;
+        this.remoteTotal = data.data.total;      
       } catch (error) {
         this.$nuxt.$emit('error', error.response.data.error);
         throw error;
       }
     },
     updateQuantity(index) {
-      Cart.updateProducts(this.products);
-      this.$nuxt.$emit('cartUpdated');
+      if (this.products[index].quantity > this.products[index].stock) {
+        this.products[index].quantity = this.products[index].stock;
+      }
+        
+      Cart.commit('setProducts', this.products);
+      this.loadTotals();
     },
     addQuantity(index, qty) {
       this.products[index].quantity = parseInt(this.products[index].quantity) + parseInt(qty);
@@ -303,12 +316,11 @@ export default {
       if (this.products[index].quantity > this.products[index].stock) {
         this.products[index].quantity = this.products[index].stock;
       }
-      Cart.updateProducts(this.products);
-      this.$nuxt.$emit('cartUpdated');
+      Cart.commit('setProducts', this.products);
+      this.loadTotals();
     },
     removeProduct(index) {
-      this.$nuxt.$emit('cartRemove', index);
-      this.products = Cart.products();
+      Cart.commit('remove', index);
     },
     updateShipping() {
       if (!this.countryId || !this.stateId || !this.cityId || !this.carrierId) {
@@ -318,13 +330,14 @@ export default {
       this.loadTotals();
     },
     async addDiscount() {
+      const originalDiscounts = JSON.parse(JSON.stringify(this.discounts));
       this.discounts.push(this.newDiscount);
 
-      try {        
+      try {
         await this.loadTotals();
-        Cart.addDiscount(this.newDiscount);
+        Cart.commit('setDiscounts', this.discounts);
       } catch (error) {
-        this.discounts = Cart.discounts();
+        Cart.commit('setDiscounts', originalDiscounts);
       }
       
       this.newDiscount = '';
@@ -356,6 +369,7 @@ export default {
         discounts: this.discounts
       }).then((res) => {
         this.$router.push(`pedidos/${res.data.id}`);
+        Cart.commit('reset');
       }).catch((error) => {
         this.$nuxt.$emit('error', error.response.data.error);
       }).then(() => {

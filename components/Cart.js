@@ -1,89 +1,73 @@
-export default {
-  save(index, data) {
-    if (localStorage) {
-      localStorage[index] = JSON.stringify(data);
+import Vue from 'vue';
+import Vuex from 'vuex';
+import VuexPersist from 'vuex-persist';
+
+const vuexPersist = new VuexPersist({
+  key: 'cart',
+  storage: (!process.server ? localStorage : null)
+});
+
+Vue.use(Vuex);
+
+const Cart = new Vuex.Store({
+  plugins: [ vuexPersist.plugin ],
+  state: {
+    products: [],
+    discounts: []
+  },
+  getters: {
+    quantity(state) {
+      return state.products.reduce((sum, p) => { return sum + p.quantity; }, 0);
+    },
+    total(state) {
+      return state.products.reduce((sum, p) => { return sum + (p.price * p.quantity); }, 0);
     }
   },
-
-  get(field) {
-    if (process.server) {
-      return null;
-    }
-
-    try {
-      if (localStorage[field]) {
-        return JSON.parse(localStorage[field]);
-      } else {
-        return null;
+  mutations: {
+    setProducts(state, payload) {
+      this.state.products = payload;
+    },
+    
+    setDiscounts(state, payload) {
+      this.state.discounts = payload;
+    },
+    
+    add(state, payload) {
+      let attributes = [];
+      let version = [];
+      const versions = payload.product.versions.filter(v => (v.id === payload.versionId));
+      
+      if (versions.length) {
+        version = versions.pop();
+        attributes = version.attributes.map(a => ({ name: a.name, value: a.value }))
       }
-    } catch {
-      return null;
-    }
-  },
+      
+      this.state.products.push({
+        productId: payload.product.id,
+        versionId: payload.versionId,
+        quantity: payload.quantity,
+        code: payload.product.code,
+        name: payload.product.name,
+        price: (version ? version.price : payload.product.price),
+        stock: Math.min((version ? version.stock : payload.product.stock), payload.product.maxQuantity),
+        image: payload.product.image,
+        attributes: attributes
+      });
+    },
     
-  discounts() {
-    const obj = this.get('discounts');
-    if (Array.isArray(obj)) {
-      return obj;
-    } else {
-      return [];
-    }
-  },
+    remove(state, index) {
+      this.state.products.splice(index, 1);
+    },
     
-  products() {
-    const obj = this.get('products');
-    if (Array.isArray(obj)) {
-      return obj;
-    } else {
-      return [];
-    }
-  },
+    addDiscount(state, code) {
+      this.state.discounts.push(code);
+    },
     
-  add(productId, versionId, quantity, data) {
-    const prods = this.products();
-    
-    let attributes = [];
-    let version = [];
-    const versions = data.versions.filter(v => (v.id === versionId));
-    
-    if (versions.length) {
-      version = versions.pop();
-      attributes = version.attributes.map(a => ({ name: a.name, value: a.value }))
-    }
-    
-    prods.push({
-      productId: productId,
-      versionId: versionId,
-      quantity: quantity,
-      code: data.code,
-      name: data.name,
-      price: (version ? version.price : data.price),
-      stock: (version ? version.stock : data.stock),
-      image: data.image,
-      attributes: attributes
-    });
-
-    this.save('products', prods);
-  },
-  
-  remove(index) {
-    const prods = this.products();
-    prods.splice(index, 1);
-    this.save('products', prods);
-  },
-  
-  addDiscount(code) {
-    const discs = this.discounts();
-    discs.push(code);
-    this.save('discounts', discs);
-  },
-  
-  updateProducts(products) {
-    this.save('products', products);
-  },
-  
-  total() {
-    return this.products().reduce((sum, p) => { return sum + (p.price * p.quantity); }, 1);
+    reset() {
+      this.state.products = [];
+      this.state.discounts = [];
+    }   
   }
+});
 
-};
+export default Cart;
