@@ -1,6 +1,6 @@
 <template>
   <div id="App">
-    <Heading :shop="shop" :categories="categories" :cart-products="cartProducts" />
+    <Heading :shop="shop" :categories="categories" :cart-products="cartProducts" :cart-total="cartTotal" />
     <main id="main">
       <nuxt />
     </main>
@@ -39,9 +39,17 @@ export default {
     this.pages = this.$store.state.pages.slice(0, 2);
     this.categories = this.$store.state.categories;
     this.cartProducts = Cart.products();
+    this.cartTotal = Cart.total();
     
     this.$nuxt.$on('cartUpdated', (message) => {
       this.cartProducts = Cart.products();
+      this.cartTotal = Cart.total();
+    });
+
+    this.$nuxt.$on('cartRemove', (index) => {
+      Cart.remove(index);
+      this.cartProducts = Cart.products();
+      this.cartTotal = Cart.total();
     });
 
     this.$nuxt.$on('error', (message) => {

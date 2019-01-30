@@ -1,5 +1,4 @@
 export default {
-    
   save(index, data) {
     if (localStorage) {
       localStorage[index] = JSON.stringify(data);
@@ -64,6 +63,12 @@ export default {
       attributes: attributes
     });
 
+    this.save('products', prods);
+  },
+  
+  remove(index) {
+    const prods = this.products();
+    prods.splice(index, 1);
     this.save('products', prods);
   },
   

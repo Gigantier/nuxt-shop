@@ -34,7 +34,7 @@
           </div>
         
           <div class="delete">
-            <a href=""><img src="../assets/images/delete.svg" alt=""></a>
+            <a @click.prevent="removeProduct(index)"><img src="../assets/images/delete.svg" alt=""></a>
           </div>
         
         </div>
@@ -293,6 +293,7 @@ export default {
     },
     updateQuantity(index) {
       Cart.updateProducts(this.products);
+      this.$nuxt.$emit('cartUpdated');
     },
     addQuantity(index, qty) {
       this.products[index].quantity = parseInt(this.products[index].quantity) + parseInt(qty);
@@ -303,6 +304,11 @@ export default {
         this.products[index].quantity = this.products[index].stock;
       }
       Cart.updateProducts(this.products);
+      this.$nuxt.$emit('cartUpdated');
+    },
+    removeProduct(index) {
+      this.$nuxt.$emit('cartRemove', index);
+      this.products = Cart.products();
     },
     updateShipping() {
       if (!this.countryId || !this.stateId || !this.cityId || !this.carrierId) {

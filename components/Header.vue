@@ -55,10 +55,29 @@
           <li v-if="!user.logged"><router-link to="/registro">regístrate</router-link></li>
           <no-ssr>
             <li v-if="cartProducts.length > 0" class="cart">
-              <a href="" class="toggle active">
+              <router-link to="carrito" class="toggle active">
                 <strong>{{ cartProducts.length }}</strong>
                 <span>Carrito</span>
-              </a>
+              </router-link>
+              <div class="drop">
+                <ul>
+                  <li v-for="(product, index) in cartProducts" :key="index">
+                    <div class="image">
+                      <img :src="product.image" alt="">
+                    </div>
+                    <div class="info">
+                      <p class="code">{{ product.code }}</p>
+                      <p class="name">{{ product.name }}</p>
+                      <p class="price">{{ $price(product.price * product.quantity) }}</p>
+                      <a class="delete" @click.prevent="removeProduct(index)"><img src="~/assets/images/delete-small.svg" alt="eliminar"></a>
+                    </div>
+                  </li>
+                </ul>
+                <div class="total">
+                  <p>{{ cartProducts.length }} items | <strong>Total: {{ $price(cartTotal) }}</strong></p>
+                  <router-link to="carrito" class="btn">Finalizar compra</router-link>
+                </div>
+              </div>
             </li>
           </no-ssr>
         </ul>
@@ -84,6 +103,10 @@ export default {
     cartProducts: {
       type: Array,
       required: true
+    },
+    cartTotal: {
+      type: Number,
+      required: true
     }
   },
   data: () => ({
@@ -103,6 +126,9 @@ export default {
       }).then(() => {
         this.$nuxt.$loading.finish();
       });
+    },
+    removeProduct(index) {
+      this.$nuxt.$emit('cartRemove', index);
     },
     logout() {
       User.logout();
