@@ -64,16 +64,30 @@ export default {
   }),
   async asyncData(params) {
     const banners = { top: [], bottom: [] };
+    let products = [];
 
-    const top = await Banner.get('home-carrousel-desktop');
-    banners.top = top.data;
+    try {
+      const top = await Banner.get('home-carrousel-desktop');
+      banners.top = top.data;
+    } catch (error) {
+      console.error(error);
+    }
 
-    const bottom = await Banner.get('home-1st-row');
-    banners.bottom = bottom.data;
+    try {
+      const bottom = await Banner.get('home-1st-row');
+      banners.bottom = bottom.data;
+    } catch (error) {
+      console.error(error);
+    }
     
-    const prods = await Product.get({ home: true, limit: 8 });
+    try {
+      products = await Product.get({ home: true, limit: 8 });
+      products = products.data.products;
+    } catch (error) {
+      console.error(error);
+    }
     
-    return { banners: banners, products: prods.data.products };
+    return { banners: banners, products: products };
   },
   created() {
     this.categories = this.$store.state.categories;
