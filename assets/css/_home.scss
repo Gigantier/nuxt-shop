@@ -1,0 +1,43 @@
+.paghome #main {
+	margin-top: 0;
+}
+
+#home {
+	
+	.banners {
+		display: flex;
+		width: calc(100% + 2.5em);
+		margin-left: -1.25em;
+		
+		a {
+			display: block;
+			width: 50%;
+			margin: 0 1.25em;
+		}
+		
+		img {
+			width: 100%;
+		}
+
+		@media (max-width: 540px) {
+			display: block;
+			margin-left: 0;
+			width: auto;
+			
+			a {
+				width: 100%;
+				margin: 0;
+
+				+ a {
+					margin-top: 2.5em;
+				}
+			}
+		}
+	}
+	
+	h1 {
+		font-size: 2.4em;
+		margin: 1.5em 0;
+	}
+	
+}
