@@ -180,7 +180,18 @@ app.post('/Order', function(req, res) {
 
 app.get('/Order/:id', cache(CACHE_TIME), function(req, res) {
   apiClient.call('/Order/list/'+req.params.id).then((data) => {
-    res.json(data);
+    // don't expose customer data
+    res.json({
+      id: data.id,
+      products: data.products,
+      carrier: data.carrier,
+      paymentMethod: data.paymentMethod,
+      status: data.status,
+      subtotal: data.subtotal,
+      discount: data.discount,
+      shipping: data.shipping,
+      total: data.total
+    });
   }).catch((data) => {
     res.status(400).json(data);
   });
