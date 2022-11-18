@@ -19,7 +19,7 @@
     "axios": "^0.18.0",
     "cross-env": "^5.2.0",
     "express": "^4.16.4",
-    "nuxt": "^2.3.4",
+    "nuxt": "^2.15.8",
     "vuex-cache": "^2.1.0",
     "vuex-persist": "^2.0.0"
   },
